@@ -1,0 +1,65 @@
+﻿<div class="board-background d-flex flex-column">
+    @if (SolutionVisible)
+    {
+        <div class="board-line d-flex row justify-content-between">
+            @for (int i = 0; i < 4; i++)
+            {
+                <div class="circle @(SolutionModel.ColorFromNumber(Steps[0].Value[i]))"></div>
+            }
+            <div class="score-background"></div>
+        </div>
+    }
+    else
+    {
+        <div class="board-line d-flex row hidden-solution">
+        </div>
+    }
+    @for (int i = 1; i < 11; i++)
+    {
+        if(Steps.Count > 1 && Steps.Count > i)
+        {
+            <div class="board-line d-flex row justify-content-between">
+                @{
+                    int[] valueArray = SolutionModel.StringToIntArray(Steps[i].Value);
+                }
+                @for (int j = 0; j < 4; j++)
+                {
+                    <div class="circle @(SolutionModel.ColorFromNumber(valueArray[j]))"></div>
+                }
+                <div class="score-background">
+                    @{
+                        int[] scoreArray = SolutionModel.StringToIntArray(Steps[i].Score);
+                    }
+                    @for (int j = 0; j < 4; j++)
+                    {
+                        int score = Steps[i].Value[j];
+                        <div class="mini-circle @(SolutionModel.ColorFromScoreNumber(scoreArray[j]))"></div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="board-line d-flex row justify-content-between">
+                @for (int j = 0; j < 4; j++)
+                {
+                    <div class="circle transparent"></div>
+                }
+                <div class="score-background">
+                    @for (int j = 0; j < 4; j++)
+                    {
+                        <div class="mini-circle transparent"></div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<MasterMindGameStep> Steps { get; set; }
+
+    public bool SolutionVisible { get; set; }
+
+}

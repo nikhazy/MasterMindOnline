@@ -1,0 +1,64 @@
+﻿body {
+}
+
+.board-background {
+    background: rgb(145,82,0);
+    background: linear-gradient(45deg, rgba(145,82,0,1) 0%, rgba(194,110,0,1) 50%, rgba(145,82,0,1) 100%);
+    width: 400px;
+}
+
+.board-line {
+    background-color: #b06400;
+    border-radius: 10px;
+    margin: 3px;
+}
+
+.circle {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+}
+
+.hidden-solution {
+    height: 40px;
+}
+
+.transparent {
+    background-color: transparent;
+    border-color: black;
+    border-width: 1px;
+}
+.red {
+    background-color: red;
+}
+.blue {
+    background-color: blue;
+}
+.purple {
+    background-color: purple;
+}
+.white {
+    background-color: white;
+}
+.yellow {
+    background-color: yellow;
+}
+.black {
+    background-color: black;
+}
+.green {
+    background-color: green;
+}
+
+.score-background{
+    width: 40px;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0px;
+}
+
+.mini-circle {
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+}

@@ -1,0 +1,129 @@
+﻿@page "/gameboard"
+
+@inject CurrentPlayerInfo currentPlayer;
+
+<button class="btn btn-primary" @onclick="StartNewGame">Új játék indítása</button>
+
+<h5>Válassz egy színt:</h5>
+<div class="tipp-background d-flex row justify-content-between">
+    @for (int i = 1; i < 7; i++)
+    {
+        string color = SolutionModel.ColorFromNumber(i);
+        <div class="circle-clickable @(color)" @onclick="(()=>SetOneTipp(color))"></div>
+    }
+</div>
+<h5>Jelenlegi tipp:</h5>
+<div class="tipp-background d-flex row justify-content-between">
+    @for (int i = 0; i < 4; i++)
+    {
+        int index = i;
+        string color = SolutionModel.ColorFromNumber(currentTipp.Values[i]);
+        <div class="circle-clickable @(color)" @onclick="(()=>ClearOneTipp(index))"></div>
+    }
+    <button disabled="@(currentTipp.IsValid() == false)" class="btn btn-primary" @onclick="AddNewTipp">Új tipp leadása</button>
+</div>
+
+@if(CurrentGame.Count() > 0)
+{
+    <BoardComponent Steps="CurrentGame"></BoardComponent>
+}
+
+
+@code {
+
+    List<MasterMindGameStep> CurrentGame = new List<MasterMindGameStep>();
+    SolutionModel currentTipp = new SolutionModel();
+    SolutionModel solution = new SolutionModel();
+    public bool isCurrentGameFinished = false;
+
+    protected override void OnInitialized()
+    {
+        using (var context = new DatabaseContext())
+        {
+            var databaseHandler = new DatabaseHandler(context);
+
+            CurrentGame = databaseHandler.LoadCurrentGame(currentPlayer.Player.PlayerName, currentPlayer.Player.CurrentGameIndex);
+        }
+        if(CurrentGame.Count > 0)
+        {
+            solution = new SolutionModel();
+            solution.AddValues(CurrentGame[0].Value);
+            isCurrentGameFinished = IsCurrentGameFinished();
+        }
+    }
+
+    private bool IsCurrentGameFinished()
+    {
+        if(CurrentGame.Count >= 11 || CurrentGame.FirstOrDefault(x=>x.Score.Replace(",","") == "2222") != null)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    private void StartNewGame()
+    {
+        currentPlayer.Player.CurrentGameIndex++;
+
+        using (var context = new DatabaseContext())
+        {
+            var databaseHandler = new DatabaseHandler(context);
+            databaseHandler.UpdatePlayer(currentPlayer.Player);
+
+            //Create random solution
+            solution = SolutionModel.CreateRandomSolution();
+            //Add solution to the database table
+            var solutionModel = new MasterMindGameStep()
+            {
+                CurrentGameIndex = currentPlayer.Player.CurrentGameIndex,
+                Value = solution.ValuesToString(),
+                Score = "",
+                PlayerName = currentPlayer.Player.PlayerName,
+                StepNumber = 0
+            };
+            CurrentGame.Add(solutionModel);
+            databaseHandler.AddNewStep(solutionModel);
+        }
+    }
+
+    private void AddNewTipp()
+    {
+        currentTipp.ScoreIt(solution.Values);
+        var tipp = new MasterMindGameStep()
+        {
+            CurrentGameIndex = currentPlayer.Player.CurrentGameIndex,
+            Value = currentTipp.ValuesToString(),
+            Score = currentTipp.ScoresToString(),
+            PlayerName = currentPlayer.Player.PlayerName,
+            StepNumber = CurrentGame.Count
+        };
+        CurrentGame.Add(tipp);
+
+        using (var context = new DatabaseContext())
+        {
+            var databaseHandler = new DatabaseHandler(context);
+            databaseHandler.AddNewStep(tipp);
+        }
+        currentTipp = new SolutionModel();
+        isCurrentGameFinished = IsCurrentGameFinished();
+    }
+
+    private void SetOneTipp(string color)
+    {
+        int tippNumber = SolutionModel.NumberFromColor(color);
+
+        if(currentTipp.Values.Contains(tippNumber) == false)
+        {
+            int tippIndex = currentTipp.Values.ToList().IndexOf(0);
+
+            currentTipp.Values[tippIndex] = tippNumber;
+        }
+    }
+    private void ClearOneTipp(int index)
+    {
+        currentTipp.Values[index] = 0;
+    }
+}

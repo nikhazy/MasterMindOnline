@@ -1,0 +1,39 @@
+﻿@page "/"
+@inject CurrentPlayerInfo currentPlayer;
+
+<h3>Szia, Válassz egy játékost!</h3>
+
+<select class="form-control" @onchange="OnPlayerSelected">
+    @foreach (var player in Players)
+    {
+        <option value="@(player.PlayerName)">@(player.PlayerName)</option>
+    }
+</select>
+
+<button class="btn btn-primary" @onclick="Login">Login</button>
+
+@code {
+    Player selectedPlayer = null;
+    List<Player> Players { get; set; }
+
+    protected override void OnInitialized()
+    {
+        using (var context = new DatabaseContext())
+        {
+            var databaseHandler = new DatabaseHandler(context);
+            Players = databaseHandler.GetAllPlayers();
+        }
+    }
+
+    private void OnPlayerSelected(ChangeEventArgs e)
+    {
+        var selected = Players.FirstOrDefault(x => x.PlayerName == e.Value.ToString());
+        selectedPlayer = selected;
+    }
+
+    private void Login()
+    {
+        currentPlayer.Player = selectedPlayer;
+        StateHasChanged();
+    }
+}
