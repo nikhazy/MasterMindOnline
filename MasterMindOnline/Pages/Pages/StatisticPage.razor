@@ -1,0 +1,49 @@
+﻿@page "/statistic"
+
+<h3>Nézzük ki hogy áll:</h3>
+
+<div class="player-baord-bg">
+    @foreach (var player in Players)
+    {
+        <div class="player-card col-12 col-lg-6">
+            <div class="player-card-header">
+                <p class="player-card-header-title">
+                    @(player.PlayerName)
+                </p>
+            </div>
+            <div class="player-card-body">
+                 <img src="/images/@(player.PlayerName.ToLower()).PNG" asp-append-version="true" width="100%" />
+                <p class="player-card-line">Összpontszám:</p>
+                <p class="player-card-line">@(player.Score)</p>
+                <p class="player-card-line">Jelenlegi játék:</p>
+                <p class="player-card-line">@(player.CurrentGameIndex)</p>
+                <p class="player-card-line">Átlag:</p>
+                <p class="player-card-line">@(Average(player))</p>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+
+    List<Player> Players { get; set; }
+
+    protected override void OnInitialized()
+    {
+        using (var context = new DatabaseContext())
+        {
+            var databaseHandler = new DatabaseHandler(context);
+            Players = databaseHandler.GetAllPlayers();
+        }
+    }
+
+    private double Average(Player player)
+    {
+        var points = player.Score;
+        var rounds = player.CurrentGameIndex;
+
+        var average = Math.Round((double)points / rounds, 2);
+
+        return Math.Round(10-average,2);
+    }
+}

@@ -1,11 +1,12 @@
 ﻿@page "/gameboard"
 
 @inject CurrentPlayerInfo currentPlayer;
+@inject NavigationManager NavManager
 
 <button class="btn btn-primary" @onclick="StartNewGame">Új játék indítása</button>
 
 <h5>Válassz egy színt:</h5>
-<div class="tipp-background d-flex row justify-content-between">
+<div class="tipp-background d-flex row justify-content-center">
     @for (int i = 1; i < 7; i++)
     {
         string color = SolutionModel.ColorFromNumber(i);
@@ -13,20 +14,52 @@
     }
 </div>
 <h5>Jelenlegi tipp:</h5>
-<div class="tipp-background d-flex row justify-content-between">
+<div class="tipp-background d-flex row justify-content-center">
     @for (int i = 0; i < 4; i++)
     {
         int index = i;
         string color = SolutionModel.ColorFromNumber(currentTipp.Values[i]);
         <div class="circle-clickable @(color)" @onclick="(()=>ClearOneTipp(index))"></div>
     }
-    <button disabled="@(currentTipp.IsValid() == false)" class="btn btn-primary" @onclick="AddNewTipp">Új tipp leadása</button>
+    <button disabled="@(currentTipp.IsValid() == false || isCurrentGameFinished)" class="btn btn-primary" @onclick="AddNewTipp">Új tipp leadása</button>
 </div>
 
-@if(CurrentGame.Count() > 0)
+@if (isCurrentGameFinished)
 {
-    <BoardComponent Steps="CurrentGame"></BoardComponent>
+    if(IsGameWon())
+    {
+        <h3 style="color: red">Gratula, NYERTÉÉÉL!</h3>
+        <span style='font-size:100px;'>&#128513;</span>
+    }
+    else
+    {
+        <h3 style="color: red">Uppsz... ez most nem sikerült! :/</h3>
+        <span style='font-size:100px;'>&#128542;</span>
+    }
 }
+
+<div class="d-flex row justify-content-between">
+    <div class="col-12 col-lg-4">
+        @if(CurrentGame.Count() > 0)
+        {
+            <BoardComponent Steps="CurrentGame" IsCurrentGameFinshed="isCurrentGameFinished"></BoardComponent>
+        } 
+    </div>
+    @*<div class="col-12 col-lg-4">
+        @if(selectedOtherPlayer != null)
+        {
+            <p>Válassz egy másik játékost:</p>
+            <select class="form-control" @onchange="OnPlayerSelected">
+                <option value="base">-Válassz-</option>
+                @foreach (var player in Players)
+                {
+                    <option value="@(player.PlayerName)">@(player.PlayerName)</option>
+                }
+            </select>
+            <BoardComponent Steps="CurrentGame" IsCurrentGameFinshed="isCurrentGameFinished"></BoardComponent>
+        } 
+    </div>*@
+</div>
 
 
 @code {
@@ -36,21 +69,48 @@
     SolutionModel solution = new SolutionModel();
     public bool isCurrentGameFinished = false;
 
+    //Player selectedOtherPlayer = null;
+    //List<Player> Players { get; set; }
+    //List<MasterMindGameStep> OtherPlayersCurrentGame = new List<MasterMindGameStep>();
+
     protected override void OnInitialized()
     {
-        using (var context = new DatabaseContext())
+        if(currentPlayer.Player == null)
         {
-            var databaseHandler = new DatabaseHandler(context);
-
-            CurrentGame = databaseHandler.LoadCurrentGame(currentPlayer.Player.PlayerName, currentPlayer.Player.CurrentGameIndex);
+            NavManager.NavigateTo("/");
         }
-        if(CurrentGame.Count > 0)
+        else
         {
-            solution = new SolutionModel();
-            solution.AddValues(CurrentGame[0].Value);
-            isCurrentGameFinished = IsCurrentGameFinished();
+            using (var context = new DatabaseContext())
+            {
+                var databaseHandler = new DatabaseHandler(context);
+
+                CurrentGame = databaseHandler.LoadCurrentGame(currentPlayer.Player.PlayerName, currentPlayer.Player.CurrentGameIndex);
+            }
+            if(CurrentGame.Count > 0)
+            {
+                solution = new SolutionModel();
+                solution.AddValues(CurrentGame[0].Value);
+                isCurrentGameFinished = IsCurrentGameFinished();
+            }
+            else
+            {
+                StartNewGame();
+            }
         }
     }
+    //private void OnPlayerSelected(ChangeEventArgs e)
+    //{
+    //    if(e.Value.ToString() != "base")
+    //    {
+    //        var selected = Players.FirstOrDefault(x => x.PlayerName == e.Value.ToString());
+    //        selectedOtherPlayer = selected;
+    //    }
+    //    else
+    //    {
+    //        selectedOtherPlayer = null;
+    //    }
+    //}
 
     private bool IsCurrentGameFinished()
     {
@@ -67,6 +127,7 @@
     private void StartNewGame()
     {
         currentPlayer.Player.CurrentGameIndex++;
+        CurrentGame.Clear();
 
         using (var context = new DatabaseContext())
         {
@@ -87,6 +148,7 @@
             CurrentGame.Add(solutionModel);
             databaseHandler.AddNewStep(solutionModel);
         }
+        isCurrentGameFinished = false;
     }
 
     private void AddNewTipp()
@@ -102,20 +164,27 @@
         };
         CurrentGame.Add(tipp);
 
+        isCurrentGameFinished = IsCurrentGameFinished();
+
         using (var context = new DatabaseContext())
         {
             var databaseHandler = new DatabaseHandler(context);
             databaseHandler.AddNewStep(tipp);
+
+            if (IsGameWon())
+            {
+                currentPlayer.Player.Score += WinnerScore();
+                databaseHandler.UpdatePlayer(currentPlayer.Player);
+            }
         }
         currentTipp = new SolutionModel();
-        isCurrentGameFinished = IsCurrentGameFinished();
     }
 
     private void SetOneTipp(string color)
     {
         int tippNumber = SolutionModel.NumberFromColor(color);
 
-        if(currentTipp.Values.Contains(tippNumber) == false)
+        if(currentTipp.Values.Contains(tippNumber) == false && currentTipp.Values.Contains(0) == true)
         {
             int tippIndex = currentTipp.Values.ToList().IndexOf(0);
 
@@ -125,5 +194,22 @@
     private void ClearOneTipp(int index)
     {
         currentTipp.Values[index] = 0;
+    }
+    private bool IsGameWon()
+    {
+        if(CurrentGame.Count <= 11 && CurrentGame.FirstOrDefault(x=>x.Score.Replace(",","") == "2222") != null)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    private int WinnerScore()
+    {
+        int steps = CurrentGame.Count() - 1;
+
+        return (10 - steps);
     }
 }

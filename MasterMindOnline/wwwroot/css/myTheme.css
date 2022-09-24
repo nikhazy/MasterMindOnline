@@ -1,0 +1,59 @@
+﻿body {
+}
+
+:root {
+    --main-color: #29303f;
+    --main-light-color: #536180;
+    --main-dark-color: #1b1f29;
+    --second-color: #ffffff;
+    --active-color: #01cab6;
+    --inactive-color: #ffffff;
+    --success-color: #1aff00;
+    --info-color: #ffd000;
+    --warning-color: #ff8c00;
+    --error-color: #9c0000;
+}
+
+
+.player-baord-bg {
+    background-color: grey;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.player-card {
+    padding: 5px;
+    border-radius: 5px;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    background-color: grey;
+    width: 300px;
+}
+
+.player-card-header {
+    padding: 0px;
+    border-radius: 5px 5px 0px 0px;
+    background-color: var(--main-color);
+}
+
+.player-card-header-title {
+    padding: 0px;
+    color: var(--second-color);
+    text-align: center;
+}
+
+.player-card-line {
+    text-align: center;
+}
+
+.player-card-body {
+    border-radius: 0px 0px 5px 5px;
+    background-color: var(--second-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.clickable {
+    cursor: pointer;
+}

@@ -1,8 +1,11 @@
 ﻿@page "/"
 @inject CurrentPlayerInfo currentPlayer;
+@inject NavigationManager NavManager
 
 <h3>Szia, Válassz egy játékost!</h3>
 
+@if (false)
+{
 <select class="form-control" @onchange="OnPlayerSelected">
     @foreach (var player in Players)
     {
@@ -11,6 +14,28 @@
 </select>
 
 <button class="btn btn-primary" @onclick="Login">Login</button>
+}
+
+<div class="player-baord-bg justify-content-between">
+    @{
+        int counter = 0;
+    }
+    @foreach (var player in Players)
+    {
+        int index = counter;
+        <div class="player-card clickable" @onclick="(()=>LoginWithIndex(index))">
+            <div class="player-card-header">
+                <p class="player-card-header-title">
+                    @(player.PlayerName)
+                </p>
+            </div>
+            <div class="player-card-body">
+                 <img src="/images/@(player.PlayerName.ToLower()).PNG" asp-append-version="true" width="100%" />
+            </div>
+        </div>
+        counter++;
+    }
+</div>
 
 @code {
     Player selectedPlayer = null;
@@ -35,5 +60,11 @@
     {
         currentPlayer.Player = selectedPlayer;
         StateHasChanged();
+    }
+
+    private void LoginWithIndex(int index)
+    {
+        currentPlayer.Player = Players[index];
+        NavManager.NavigateTo("/gameboard");
     }
 }

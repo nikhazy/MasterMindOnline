@@ -12,6 +12,11 @@
     border-radius: 10px;
     margin: 3px;
 }
+.board-line-solution {
+    background-color: black;
+    border-radius: 10px;
+    margin: 3px;
+}
 
 .circle {
     border-radius: 50%;
